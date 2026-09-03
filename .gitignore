@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Next.js Build & Outputs
+frontend/.next/
+frontend/out/
+frontend/build/
+dist/
+
+# Environment Variables & Local Configs
+.env
+.env*.local
+*.env
+
+# Debug & Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.next/dev/logs/
+
+# IDE & OS Files
+.DS_Store
+.vscode/
+.idea/
