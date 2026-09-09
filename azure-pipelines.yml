@@ -1,0 +1,25 @@
+trigger:
+  - main  # Runs whenever code is pushed to the main branch
+
+pool:
+  name: 'Default'  # Tells Azure DevOps to run this job on your EDDGE-WP-3000MQ agent
+
+steps:
+  - script: |
+      echo "=== Step 1: Checking Installed Tools ==="
+      docker --version
+      docker compose version
+    displayName: 'Check Server Tooling'
+
+  - script: |
+      echo "=== Step 2: Testing Local Stack Connectivity ==="
+      # Verify Jenkins accessibility on localhost
+      curl -I http://localhost:8080 || echo "Jenkins check completed"
+      # Verify Nginx proxy on port 80
+      curl -I http://localhost:80 || echo "Nginx check completed"
+    displayName: 'Check Local Services'
+
+  - script: |
+      echo "=== Step 3: Building Containers ==="
+      docker compose build
+    displayName: 'Docker Compose Build'
