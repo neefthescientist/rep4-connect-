@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   db:
     image: postgres:16-alpine
@@ -9,10 +7,11 @@ services:
       POSTGRES_PASSWORD: postgrespassword
       POSTGRES_DB: rep4db
     ports:
-      - "5432:5432"
+      - "5432:5432" # Host port 5433 -> Container 5432 
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    restart: unless-stopped
 
   app:
     build:
@@ -25,6 +24,21 @@ services:
       DATABASE_URL: postgresql://postgres:postgrespassword@db:5432/rep4db
     depends_on:
       - db
+    restart: unless-stopped
+
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: jenkins-server
+    user: root
+    ports:
+      - "8080:8080" # Mapps host ports 8085 to container port 8080
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
 
 volumes:
   pgdata:
+  jenkins_home:
+
