@@ -5,40 +5,45 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgrespassword
-      POSTGRES_DB: rep4db
+      POSTGRES_DB: ${POSTGRES_DB:-rep4db}
     ports:
-      - "5432:5432" # Host port 5433 -> Container 5432 
+      - "${DB_HOST_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
 
   app:
+    # Azure DevOps sets IMAGE_REPOSITORY and IMAGE_TAG before deployment.
+    image: ${IMAGE_REPOSITORY:?Set IMAGE_REPOSITORY}/rep4-connect:${IMAGE_TAG:?Set IMAGE_TAG}
+
+    # Retain build settings for authorized local development builds.
     build:
       context: .
       dockerfile: Dockerfile
+
     container_name: rep4-app
     ports:
-      - "3000:3000"
+      - "${APP_HOST_PORT:-3000}:3000"
     environment:
-      DATABASE_URL: postgresql://postgres:postgrespassword@db:5432/rep4db
-    depends_on:
-      - db
-    restart: unless-stopped
+      NODE_ENV: production
 
-  jenkins:
-    image: jenkins/jenkins:lts
-    container_name: jenkins-server
-    user: root
-    ports:
-      - "8080:8080" # Mapps host ports 8085 to container port 8080
-      - "50000:50000"
-    volumes:
-      - jenkins_home:/var/jenkins_home
-      - /var/run/docker.sock:/var/run/docker.sock
+      # Set this as a secret/runtime variable on the deployment host.
+      DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL}
+    depends_on:
+      db:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:
   pgdata:
-  jenkins_home:
 
